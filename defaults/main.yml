@@ -1,0 +1,37 @@
+---
+
+## Defaults
+timezone: America/Toronto
+
+## Adguardhome Defaults
+adguard_aaaa_disabled: true
+adguard_dnssec_enabled: true
+adguard_local_ptr_upstream:
+  - "10.10.1.1:53"
+adguard_local_zone: "10.in-addr.arpa."
+adguardhome_password: "{{ vault_adguardhome_password }}"
+adguard_upstream_dns:
+  - "https://dns.cloudflare.com/dns-query"
+  - "https://security.cloudflare-dns.com/dns-query"
+adguard_fallback_dns:
+  - "10.10.1.1"
+adguard_bootstrap_dns:
+  - "1.1.1.1"
+  - "8.8.8.8"
+  - "2620:fe::10"
+  - "2620:fe::fe:10"
+adguardhome_dns_ratelimit: 0
+adguardhome_username: admin
+
+adguardhome_safe_search_enabled: false
+adguardhome_safe_search_bing: false
+adguardhome_safe_search_duckduckgo: false
+adguardhome_safe_search_ecosia: false
+adguardhome_safe_search_google: false
+adguardhome_safe_search_pixabay: false
+adguardhome_safe_search_yandexo: false
+adguardhome_safe_search_youtube: false
+
+## Unbound Defaults
+unbound_enabled: false
+unbound_port: 5053

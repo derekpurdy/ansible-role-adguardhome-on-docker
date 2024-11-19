@@ -1,0 +1,45 @@
+---
+
+- name: Creates AdGuard conf directory
+  ansible.builtin.file:
+    path: "/home/{{ ansible_user }}/adguard_conf"
+    state: directory
+
+- name: Creates AdGuard work directory
+  ansible.builtin.file:
+    path: "/home/{{ ansible_user }}/adguard_work"
+    state: directory
+
+- name: Create AdGuardHome.yaml file
+  ansible.builtin.template:
+    src: AdGuardHome.yaml.j2
+    dest: "/home/{{ ansible_user }}/adguard_conf/AdGuardHome.yaml"
+    mode: "0600"
+  notify: Restart AdGuard docker container
+
+- name: Ensure AdGuard docker container is updated and running
+  community.docker.docker_container:
+    name: adguardhome
+    image: adguard/adguardhome:latest
+    state: started
+    pull: true
+    restart: false
+    restart_policy: unless-stopped
+    ports:
+      - "53:53/udp"  # DNS
+      - "53:53/tcp"  # DNS
+      - "67:67/udp"  # DHCP
+      - "68:68/udp"  # DHCP
+      - "80:80/tcp"  # Web Interface
+      - "443:443/tcp"  # Web Interface
+      - "443:443/udp"
+      - "3000:3000/tcp"
+      - "853:853/tcp"
+      - "784:784/udp"
+      - "853:853/udp"
+      - "8853:8853/udp"
+      - "5443:5443/tcp"
+      - "5443:5443/udp"
+    volumes:
+      - ./adguard_conf/:/opt/adguardhome/conf
+      - ./adguard_data/:/opt/adguardhome/work
