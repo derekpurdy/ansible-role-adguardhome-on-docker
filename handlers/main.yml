@@ -1,0 +1,50 @@
+---
+
+- name: Restart AdGuard docker container
+  community.docker.docker_container:
+    name: adguardhome
+    image: adguard/adguardhome:latest
+    state: started
+    restart: true
+    restart_policy: unless-stopped
+    ports:
+      - "53:53/udp"  # DNS
+      - "53:53/tcp"  # DNS
+      - "67:67/udp"  # DHCP
+      - "68:68/udp"  # DHCP
+      - "80:80/tcp"  # Web Interface
+      - "443:443/tcp"  # Web Interface
+      - "443:443/udp"
+      - "3000:3000/tcp"
+      - "853:853/tcp"
+      - "784:784/udp"
+      - "853:853/udp"
+      - "8853:8853/udp"
+      - "5443:5443/tcp"
+      - "5443:5443/udp"
+    volumes:
+      - ./adguard_conf/:/opt/adguardhome/conf
+      - ./adguard_data/:/opt/adguardhome/work
+    env:
+      TZ={{ timezone }}
+  tags:
+    - adguardhome
+
+- name: Restart Unbound docker container
+  community.docker.docker_container:
+    name: unbound
+    image: pedantic/unbound:latest
+    state: started
+    restart: true
+    restart_policy: unless-stopped
+    detach: true
+    ports:
+      - "{{ unbound_port }}:53/udp"  # DNS
+      - "{{ unbound_port }}:53/tcp"  # DNS
+    volumes:
+      - ./unbound_conf/unbound.conf:/opt/unbound/etc/unbound/unbound.conf
+      - ./unbound_conf/a-records.conf:/opt/unbound/etc/unbound/a-records.conf
+    env:
+      TZ={{ timezone }}
+  tags:
+    - unbound

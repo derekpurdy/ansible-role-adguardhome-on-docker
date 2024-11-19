@@ -1,0 +1,234 @@
+http:
+  pprof:
+    port: 6060
+    enabled: false
+  address: 0.0.0.0:80
+  session_ttl: 720h
+users:
+  - name: {{ adguardhome_username }}
+    password: {{ adguardhome_password }}
+auth_attempts: 5
+block_auth_min: 15
+http_proxy: ""
+language: ""
+theme: auto
+dns:
+  bind_hosts:
+    - 0.0.0.0
+  port: 53
+  anonymize_client_ip: false
+  ratelimit: {{ adguardhome_dns_ratelimit }}
+  ratelimit_subnet_len_ipv4: 24
+  ratelimit_subnet_len_ipv6: 56
+  ratelimit_whitelist: []
+  refuse_any: true
+  upstream_dns:
+{% if unbound_enabled is true %}
+    - {{ ansible_default_ipv4.address }}:{{ unbound_port }}
+{% else %}
+{% for item in adguard_upstream_dns %}
+    - {{ item }}
+{% endfor %}
+{% endif %}
+  upstream_dns_file: ""
+  bootstrap_dns:
+{% for item in adguard_bootstrap_dns %}
+    - {{ item }}
+{% endfor %}
+  fallback_dns:
+{% for item in adguard_fallback_dns %}
+    - {{ item }}
+{% endfor %}
+  upstream_mode: load_balance
+  fastest_timeout: 1s
+  allowed_clients: []
+  disallowed_clients: []
+  blocked_hosts:
+    - version.bind
+    - id.server
+    - hostname.bind
+  trusted_proxies:
+    - 127.0.0.0/8
+    - ::1/128
+{% if unbound_enabled is true %}
+  cache_size: 0
+{% else %}
+  cache_size: 4194304
+{% endif %}
+  cache_ttl_min: 0
+  cache_ttl_max: 0
+  cache_optimistic: false
+  bogus_nxdomain: []
+  aaaa_disabled: {{ adguard_aaaa_disabled|lower }}
+{% if unbound_enabled is true %}
+  enable_dnssec: false
+{% else %}
+  enable_dnssec: {{ adguard_dnssec_enabled|lower }}
+{% endif %}
+  edns_client_subnet:
+    custom_ip: ""
+    enabled: false
+    use_custom: false
+  max_goroutines: 300
+  handle_ddr: true
+  ipset: []
+  ipset_file: ""
+  bootstrap_prefer_ipv6: false
+  upstream_timeout: 10s
+{% if adguard_private_networks is defined %}
+  private_networks:
+{% for item in adguard_private_networks %}
+    - {{ item }}
+{% endfor %}
+{% else %}
+  private_networks: []
+{% endif %}
+  use_private_ptr_resolvers: true
+{% if adguard_local_ptr_upstream is defined %}
+  local_ptr_upstreams:
+{% for item in adguard_local_ptr_upstream %}
+    - {{ item }}
+{% endfor %}
+{% else %}
+  local_ptr_upstreams: []
+{% endif %}
+  use_dns64: false
+  dns64_prefixes: []
+  serve_http3: false
+  use_http3_upstreams: false
+  serve_plain_dns: true
+  hostsfile_enabled: true
+tls:
+  enabled: false
+  server_name: ""
+  force_https: false
+  port_https: 443
+  port_dns_over_tls: 853
+  port_dns_over_quic: 853
+  port_dnscrypt: 0
+  dnscrypt_config_file: ""
+  allow_unencrypted_doh: false
+  certificate_chain: ""
+  private_key: ""
+  certificate_path: ""
+  private_key_path: ""
+  strict_sni_check: false
+querylog:
+  dir_path: ""
+  ignored: []
+  interval: 2160h
+  size_memory: 1000
+  enabled: true
+  file_enabled: true
+statistics:
+  dir_path: ""
+  ignored: []
+  interval: 24h
+  enabled: true
+{% if adguard_blocklist_filters is defined %}
+filters:
+{% for item in adguard_blocklist_filters %}
+  - enabled: {{ item.enabled|lower }}
+    url: {{ item.url }}
+    name: {{ item.name }}
+    id: {{ item.id }}
+{% endfor %}
+{% else %}
+filters: []
+{% endif %}
+{% if adguard_whitelist_filters is defined %}
+whitelist_filters:
+{% for item in adguard_whitelist_filters %}
+  - enabled: {{ item.enabled|lower }}
+    url: {{ item.url }}
+    name: {{ item.name }}
+    id: {{ item.id }}
+{% endfor %}
+{% else %}
+whitelist_filters: []
+{% endif %}
+user_rules: []
+dhcp:
+  enabled: false
+  interface_name: ""
+  local_domain_name: lan
+  dhcpv4:
+    gateway_ip: ""
+    subnet_mask: ""
+    range_start: ""
+    range_end: ""
+    lease_duration: 86400
+    icmp_timeout_msec: 1000
+    options: []
+  dhcpv6:
+    range_start: ""
+    lease_duration: 86400
+    ra_slaac_only: false
+    ra_allow_slaac: false
+filtering:
+  blocking_ipv4: ""
+  blocking_ipv6: ""
+  blocked_services:
+    schedule:
+      time_zone: UTC
+    ids: []
+  protection_disabled_until: null
+  safe_search:
+    enabled: {{ adguardhome_safe_search_enabled }}
+    bing: {{ adguardhome_safe_search_bing }}
+    duckduckgo: {{ adguardhome_safe_search_duckduckgo }}
+    ecosia: {{ adguardhome_safe_search_ecosia }}
+    google: {{ adguardhome_safe_search_google }}
+    pixabay: {{ adguardhome_safe_search_pixabay }}
+    yandex: {{ adguardhome_safe_search_yandexo }}
+    youtube: {{ adguardhome_safe_search_youtube }}
+  blocking_mode: default
+  parental_block_host: family-block.dns.adguard.com
+  safebrowsing_block_host: standard-block.dns.adguard.com
+{% if local_arecord_list is defined or local_cname_list is defined%}
+  rewrites:
+{% for item in local_arecord_list %}
+    - domain: {{ item.name }}
+      answer: {{ item.ip }}
+{% endfor %}
+{% for item in local_cname_list %}
+    - domain: {{ item.domain }}
+      answer: {{ item.target_domain }}
+{% endfor %}
+{% else %}
+  rewrites: []
+{% endif %}
+  safe_fs_patterns:
+    - /opt/adguardhome/work/data/userfilters/*
+  safebrowsing_cache_size: 1048576
+  safesearch_cache_size: 1048576
+  parental_cache_size: 1048576
+  cache_time: 30
+  filters_update_interval: 24
+  blocked_response_ttl: 10
+  filtering_enabled: true
+  parental_enabled: false
+  safebrowsing_enabled: false
+  protection_enabled: true
+clients:
+  runtime_sources:
+    whois: true
+    arp: true
+    rdns: true
+    dhcp: true
+    hosts: true
+  persistent: []
+log:
+  enabled: true
+  file: ""
+  max_backups: 0
+  max_size: 100
+  max_age: 3
+  compress: false
+  local_time: false
+  verbose: false
+os:
+  group: ""
+  user: ""
+  rlimit_nofile: 0
+schema_version: 29
